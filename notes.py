@@ -157,13 +157,15 @@ class args_parser:
                 result.update({arg_name: result[alias]})
             elif arg_name not in result:
                 print(
-                    f'Error: Missing argument "{arg_name}" or "{alias}", please run -h or --help for further information'
+                    f'Error: Missing argument "{arg_name}" or "{alias}",'
+                    " please run -h or --help for further information"
                 )
                 sys.exit(1)
         for arg_name in result:
             if arg_name not in self.namelist:
                 print(
-                    f'Error: Unknown argument "{arg_name}", please run -h or --help for further information'
+                    f'Error: Unknown argument "{arg_name}",'
+                    " please run -h or --help for further information"
                 )
                 sys.exit(1)
         return result
