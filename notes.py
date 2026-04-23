@@ -6,11 +6,34 @@ import re
 path_join = os.path.join
 
 
+def shorten_path(path: str) -> str:
+    """
+    Replace the user's home directory prefix with '~' if the given path
+    is inside or equal to the home directory.
+
+    Args:
+        path: Absolute or relative path.
+
+    Returns:
+        Path with home replaced by '~' if applicable, otherwise the
+        normalized absolute path.
+    """
+    home = os.path.expanduser("~")
+    abs_path = os.path.abspath(os.path.expanduser(path))
+    home = os.path.normpath(home)
+    if abs_path == home:
+        return "~"
+    if abs_path.startswith(home + os.sep):
+        return "~" + abs_path[len(home) :]
+    return abs_path
+
+
 def parser(path: str) -> dict[str, dict[str, list[str]]]:
     if os.path.exists(path) and os.path.isfile(path):
         pass
     else:
-        print(f'Error: File "{path}" does not exist or is not a file')
+        print(f'Error: File "{shorten_path(path)}" does not exist or is not a file')
+        sys.exit(1)
     iterator: Iterator[str]
     with open(path, "r") as file:
         iterator = (i for i in file.readlines())
@@ -215,8 +238,8 @@ def main():
         print(key + ":", end="")
         print(
             "\n\t"
-            + "\n\t".join(
-                f"{k}:\n\t\t{"\n\t\t".join(v)}" for k, v in value.items()  # type: ignore
+            + "\t".join(
+                f"{k}:\n\t\t{"\t\t".join(v)}" for k, v in value.items()  # type: ignore
             )
         )
 
