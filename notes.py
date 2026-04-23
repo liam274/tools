@@ -7,6 +7,10 @@ path_join = os.path.join
 
 
 def parser(path: str) -> dict[str, dict[str, list[str]]]:
+    if os.path.exists(path) and os.path.isfile(path):
+        pass
+    else:
+        print(f'Error: File "{path}" does not exist or is not a file')
     iterator: Iterator[str]
     with open(path, "r") as file:
         iterator = (i for i in file.readlines())
@@ -100,7 +104,7 @@ class args_parser:
                 is_arg = False
             else:
                 arg_name = arg
-                result.update({arg_name:""})
+                result.update({arg_name: ""})
         if "-h" in result or "--help" in result:
             value: str = result.get("-h", result.get("--help", ""))
             maxs: int = self.maxs + 6
@@ -118,7 +122,7 @@ class args_parser:
                     " " * (maxs - len(arg_name) - len(alias) - 1),
                     description,
                 )
-                print(" " * (maxs+2), default_value)
+                print(" " * (maxs + 2), default_value)
             sys.exit(0)
         for arg_name, alias, description, default_value in self.required_args:
             if default_value:
@@ -160,25 +164,31 @@ def find(
 
     for key, value in data.items():
         if query in key:
-            key=re.sub(pattern, replacer, key)
+            key = re.sub(pattern, replacer, key)
             result.update({key: value})
         ok: bool = False
-        _temp: dict[str,list[str]]={}
+        _temp: dict[str, list[str]] = {}
         for k, v in value.items():
             if query in k:
-                ok=True
+                ok = True
                 break
             for i in v:
                 if query in i or ok:
-                    ok=True
+                    ok = True
                     break
             else:
                 continue
             break
         if ok:
-            for k,v in value.items():
-                _temp.update({re.sub(pattern,replacer,k):[re.sub(pattern,replacer,i) for i in v]})
-            result.update({key:_temp})
+            for k, v in value.items():
+                _temp.update(
+                    {
+                        re.sub(pattern, replacer, k): [
+                            re.sub(pattern, replacer, i) for i in v
+                        ]
+                    }
+                )
+            result.update({key: _temp})
     for _, __ in result.items():
         for key, value in __.items():
             temp: list[str] = []
@@ -202,10 +212,14 @@ def main():
     tree: dict[str, dict[str, list[str]]] = parser(args["-f"])
     result: dict[str, dict[str, list[str]]] = find(args["-s"], tree)
     for key, value in result.items():
-        print(key + ":",end="")
-        print("\n\t"+"\n\t".join(
-            f"{k}:\n\t\t{"\n\t\t".join(v)}" for k, v in value.items() # type: ignore
-            ))
+        print(key + ":", end="")
+        print(
+            "\n\t"
+            + "\n\t".join(
+                f"{k}:\n\t\t{"\n\t\t".join(v)}" for k, v in value.items()  # type: ignore
+            )
+        )
+
 
 if __name__ == "__main__":
     welcome()
