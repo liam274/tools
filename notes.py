@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+"""
+This is a simple note rendering application
+"""
 import sys
 import os
 from typing import Iterator
@@ -30,13 +33,14 @@ def shorten_path(path: str) -> str:
 
 
 def parser(path: str) -> dict[str, dict[str, list[str]]]:
+    """Parse the given file and return an AST tree"""
     if os.path.exists(path) and os.path.isfile(path):
         pass
     else:
         print(f'Error: File "{shorten_path(path)}" does not exist or is not a file')
         sys.exit(1)
     iterator: Iterator[str]
-    with open(path, "r") as file:
+    with open(path, "r", encoding="utf-8") as file:
         iterator = (i for i in file.readlines())
     result: dict[str, dict[str, list[str]]] = {}
     section_title: str = ""
@@ -76,6 +80,8 @@ def parser(path: str) -> dict[str, dict[str, list[str]]]:
 
 
 def has(data: str, find: str, escape: str) -> int:
+    """Check if the given string has the given character,
+    and return its index, otherwise return -1"""
     skip: bool = False
     i: int = -1
     for char in data:
@@ -89,10 +95,12 @@ def has(data: str, find: str, escape: str) -> int:
             skip = True
         if char in find:
             return i
-    return 0
+    return -1
 
 
 class args_parser:
+    """A simple argument parser"""
+
     def __init__(self):
         self.required_args: set[tuple[str, str, str, str]] = set()
         self.maxs: int = 0
@@ -101,19 +109,21 @@ class args_parser:
     def append(
         self, arg_name: str, alias: str, description: str, default_value: str = ""
     ):
+        """Give me rules for the parser"""
         self.required_args.add((arg_name, alias, description, default_value))
         self.namelist.add(arg_name)
         self.namelist.add(alias)
-        if len(arg_name) + len(alias) > self.maxs:
-            self.maxs = len(arg_name) + len(alias)
+        self.maxs = max(self.maxs, len(arg_name) + len(alias))
 
     def find(self, value: str) -> tuple[str, str, str, str]:
+        """Find the argument with the given name or alias, and return its name, alias, etc."""
         for i in self.required_args:
-            if i[0] == value or i[1] == value:
+            if value in i[:2]:
                 return i
         return ("", "", "", "")
 
     def apply(self, args: list[str]) -> dict[str, str]:
+        """Apply the given rules"""
         result: dict[str, str] = {}
         is_arg: bool = True
         arg_name: str = ""
@@ -172,6 +182,7 @@ class args_parser:
 
 
 def welcome():
+    """Print the welcome message"""
     print("Welcome to the world of Notes!")
 
 
@@ -182,6 +193,7 @@ RESET = "\033[0m"
 def find(
     query: str, data: dict[str, dict[str, list[str]]]
 ) -> dict[str, dict[str, list[str]]]:
+    """Match query"""
     result: dict[str, dict[str, list[str]]] = {}
     pattern: str = re.escape(query)
 
@@ -226,6 +238,7 @@ def find(
 
 
 def main():
+    """Main program"""
     parse: args_parser = args_parser()
     parse.append(
         "-f",
