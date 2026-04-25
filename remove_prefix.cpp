@@ -85,7 +85,6 @@ int main(int argc, char *argv[])
     parser.append("-f", "--force", "Overwrite conflicting files without asking", "", {"-s", "-n"});
     parser.append("-s", "--skip", "Automatically skip conflicting files", "", {"-f", "-n"});
     parser.append("-n", "--ask", "Ask for new name on conflict (default behavior)", "", {"-f", "-s"});
-    parser.append("-h", "--help", "Show this help");
 
     auto args = parser.verify(argv, argc);
 
