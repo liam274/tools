@@ -1,56 +1,49 @@
+#include "argument-parse.h"
 #include <iostream>
 #include <filesystem>
 #include <string>
-#include <vector>
-#include "argument-parse.h"
 
 namespace fs = std::filesystem;
 
-// 去除文件名前缀
-std::string strip_prefix(const std::string &filename, const std::string &prefix)
+std::string strip_prefix(const std::string &name, const std::string &prefix)
 {
-    if (filename.rfind(prefix, 0) == 0)
-        return filename.substr(prefix.size());
-    return filename;
+    if (name.rfind(prefix, 0) == 0)
+        return name.substr(prefix.size());
+    return name;
 }
 
-// 处理文件重命名（带冲突解决）
-bool rename_file(const fs::path &old_path, const std::string &new_name,
-                 bool force, bool auto_skip, bool interactive)
+bool rename_with_conflict(const fs::path &old_path, const std::string &new_name,
+                          bool force, bool skip)
 {
     fs::path new_path = old_path.parent_path() / new_name;
     if (!fs::exists(new_path))
     {
         fs::rename(old_path, new_path);
-        std::cout << "Renamed: " << old_path.filename().string() << " -> " << new_name << "\n";
+        std::cout << "Renamed: " << old_path.filename().string() << " -> " << new_name << '\n';
         return true;
     }
 
-    // 冲突处理
     if (force)
     {
         fs::remove(new_path);
         fs::rename(old_path, new_path);
-        std::cout << "Overwrote: " << old_path.filename().string() << " -> " << new_name << "\n";
+        std::cout << "Overwrote: " << old_path.filename().string() << " -> " << new_name << '\n';
         return true;
     }
-    if (auto_skip)
+    if (skip)
     {
-        std::cout << "Skipped: " << old_path.filename().string() << " (target " << new_name << " exists)\n";
+        std::cout << "Skipped: " << old_path.filename().string() << " (target exists)\n";
         return false;
     }
-    // interactive mode (default when no -f/-s)
+    // 询问模式（默认）
     while (true)
     {
-        std::cout << "Conflict: " << old_path.filename().string() << " -> " << new_name << " already exists.\n"
-                  << "Enter new name, or 'skip', or 'overwrite': ";
+        std::cout << "Conflict: " << old_path.filename().string() << " -> " << new_name << " exists.\n"
+                  << "Enter new name, 'skip', or 'overwrite': ";
         std::string input;
         std::getline(std::cin, input);
         if (input == "skip")
-        {
-            std::cout << "Skipped.\n";
             return false;
-        }
         if (input == "overwrite")
         {
             fs::remove(new_path);
@@ -60,31 +53,31 @@ bool rename_file(const fs::path &old_path, const std::string &new_name,
         }
         if (!input.empty())
         {
-            fs::path candidate = old_path.parent_path() / input;
-            if (!fs::exists(candidate))
+            fs::path cand = old_path.parent_path() / input;
+            if (!fs::exists(cand))
             {
-                fs::rename(old_path, candidate);
-                std::cout << "Renamed to: " << input << "\n";
+                fs::rename(old_path, cand);
+                std::cout << "Renamed to: " << input << '\n';
                 return true;
             }
-            else
-            {
-                std::cout << "That name also exists. Try again.\n";
-            }
+            std::cout << "Name also exists. Try again.\n";
         }
     }
 }
 
 int main(int argc, char *argv[])
 {
-    argv_verify parser(argv[0], true, "Remove prefix from filenames in a directory");
+    argv_verify parser(argv[0], true, "Remove prefix from filenames");
 
-    // 定义参数（利用默认值和冲突检测）
-    parser.append("-d", "--dir", "Target directory (default: current directory)", ".");
-    parser.append("-p", "--prefix", "Prefix to remove (required)", "", {});
-    parser.append("-f", "--force", "Overwrite conflicting files without asking", "", {"-s", "-n"});
-    parser.append("-s", "--skip", "Automatically skip conflicting files", "", {"-f", "-n"});
-    parser.append("-n", "--ask", "Ask for new name on conflict (default behavior)", "", {"-f", "-s"});
+    // 给所有选项都加上非空默认值，避免被视为必需参数
+    // -d 有默认值 "."
+    // -p 是必需的，所以默认值留空（或者随便给一个，然后单独检查），但用户要求前缀必填，所以保留空字符串让它成为必需
+    // -f 和 -s 给一个假的默认值 "false"，通过值是否为空字符串来判断用户是否显式提供
+    parser.append("-d", "--dir", "Target directory", ".");
+    parser.append("-p", "--prefix", "Prefix to remove (required)", "", {}); // 必需
+    parser.append("-f", "--force", "Overwrite conflicts without asking", "false", {"-s"});
+    parser.append("-s", "--skip", "Automatically skip conflicting files", "false", {"-f"});
+    // 不注册 -n，默认就是询问模式
 
     auto args = parser.verify(argv, argc);
 
@@ -98,32 +91,34 @@ int main(int argc, char *argv[])
     fs::path dir = args["-d"];
     if (!fs::exists(dir) || !fs::is_directory(dir))
     {
-        std::cerr << "Error: Directory '" << dir.string() << "' does not exist.\n";
+        std::cerr << "Error: Directory '" << dir.string() << "' invalid.\n";
         return 1;
     }
 
-    bool force_mode = args.find("-f") != args.end();
-    bool skip_mode = args.find("-s") != args.end();
-    bool ask_mode = args.find("-n") != args.end() || (!force_mode && !skip_mode); // 默认询问
+    // 判断用户是否提供了 -f 或 -s：如果参数值为空字符串，说明用户显式写了该标志
+    bool force = (args.find("-f") != args.end() && args.at("-f").empty());
+    bool skip = (args.find("-s") != args.end() && args.at("-s").empty());
+
+    // 如果同时提供了 -f 和 -s，库的 collide 会阻止（会报错退出），这里不需要额外处理
 
     int count = 0;
     for (const auto &entry : fs::directory_iterator(dir))
     {
         if (!entry.is_regular_file())
             continue;
-        std::string old_name = entry.path().filename().string();
-        std::string new_name = strip_prefix(old_name, prefix);
-        if (new_name == old_name)
-            continue; // 前缀不匹配
-        if (new_name.empty())
+        std::string old = entry.path().filename().string();
+        std::string newname = strip_prefix(old, prefix);
+        if (newname == old)
+            continue;
+        if (newname.empty())
         {
-            std::cerr << "Warning: '" << old_name << "' becomes empty name, skipped.\n";
+            std::cerr << "Warning: '" << old << "' becomes empty, skipped.\n";
             continue;
         }
-        if (rename_file(entry.path(), new_name, force_mode, skip_mode, ask_mode))
+        if (rename_with_conflict(entry.path(), newname, force, skip))
             ++count;
     }
 
-    std::cout << "Done. " << count << " files renamed.\n";
+    std::cout << "Done. Renamed " << count << " files.\n";
     return 0;
 }
