@@ -244,7 +244,7 @@ def main():
         "-f",
         "--file",
         "The file that should be see as note.",
-        path_join(os.getcwd(), "skills"),
+        os.path.expanduser("~/skills"),
     )
     parse.append("-s", "--search", "Search for something")
     args: dict[str, str] = parse.apply(sys.argv[1:])
