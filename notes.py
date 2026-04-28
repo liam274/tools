@@ -135,10 +135,11 @@ class args_parser:
             index: int = has(arg, "=", "\\")
             if index:
                 result.update({arg[:index]: arg[index + 1 :]})
-                is_arg = False
+                is_arg = True
             else:
                 arg_name = arg
                 result.update({arg_name: ""})
+        print(result)
         if "-h" in result or "--help" in result:
             value: str = result.get("-h", result.get("--help", ""))
             maxs: int = self.maxs + 6
@@ -247,6 +248,7 @@ def main():
         os.path.expanduser("~/skills"),
     )
     parse.append("-s", "--search", "Search for something")
+    print(sys.argv[1:])
     args: dict[str, str] = parse.apply(sys.argv[1:])
     tree: dict[str, dict[str, list[str]]] = parser(args["-f"])
     result: dict[str, dict[str, list[str]]] = find(args["-s"], tree)
