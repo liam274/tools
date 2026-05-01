@@ -11,7 +11,7 @@ FILENAME: str=sys.argv[1]
 FILELENGTH: str=sys.argv[2]
 
 result: str=""
-os.path.exists(FILENAME) and print("Error: <file-name> must be a non-exist path",end="")==None and (result:=input("(c for \"cover\", q for \"quit\")"))!="c" and sys.exit(1)
+os.path.exists(FILENAME) and print("Error: <file-name> must be a non-exist path",end="")==None and (result:=input("(c for \"cover\", q for \"quit\")"?))!="c" and sys.exit(1)
 result=="c" and open(FILENAME, "w").close() and print(f"File {FILENAME} cleared")
 
 times: int=int(FILELENGTH if FILELENGTH.isdigit() else (sys.exit(1) if print("Error: <file-length> must be an available dec")==None else None))
