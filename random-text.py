@@ -5,6 +5,7 @@ import random
 
 if len(sys.argv)<3:
     print("Usage: ./random-text.py <file-name> <file-length>")
+    sys.exit(1)
 
 os.path.exists(sys.argv[1]) and print("Error: <file-name> must be a non-exist path")==None and sys.exit(1)
 
