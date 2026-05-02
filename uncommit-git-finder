@@ -1,7 +1,7 @@
 #!/bin/bash
 tmp=$(mktemp)
 
-find ~ -path '*/.*/*' -prune -o -name ".git" -type d -print | \
+find ${1-~} -path '*/.*/*' -prune -o -name ".git" -type d -print | \
     sed 's|/.git$||' | \
     xargs -P 8 -I {} bash -c '
         cd "{}" || exit
