@@ -1,0 +1,15 @@
+#!/bin/bash
+tmp=$(mktemp)
+
+find ~ -path '*/.*/*' -prune -o -name ".git" -type d -print | \
+    sed 's|/.git$||' | \
+    xargs -P 8 -I {} bash -c '
+        cd "{}" || exit
+        out=""
+        [ -n "$(git status --porcelain 2>/dev/null)" ] && out="$out uncommitted"
+        [ -n "$(git rev-list @{u}.. 2>/dev/null)" ] && out="$out unpushed"
+        [ -n "$out" ] && echo "{}:$out"
+    ' >> "$tmp"
+
+cat "$tmp" | sort
+rm "$tmp"
