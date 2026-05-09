@@ -78,6 +78,7 @@ private:
     std::string description;
     bool _strict;
     std::vector<std::string> org;
+    std::unordered_map<std::string, std::string> last;
     const bool collide_ok(const std::unordered_map<std::string, std::string> &flags, const std::vector<std::string> &detail) const
     {
         for (const std::string &item : detail)
@@ -114,13 +115,17 @@ public:
     {
         std::cout << name << " " << description << std::endl;
     }
+    const bool has(const std::string &name) const
+    {
+        return last.find(name) != last.end();
+    }
     /**
      * @brief
      * @param data
      * @param argc
      * @return
      */
-    std::unordered_map<std::string, std::string> verify(char *data[], const int argc) const
+    std::unordered_map<std::string, std::string> verify(char *data[], const int argc)
     {
         std::unordered_map<std::string, std::string> flags = {};
         bool is_flag = true;
@@ -129,6 +134,16 @@ public:
         {
             if (data[t][0] == '-')
             {
+                if (data[t][1] != '-' && data[t][2])
+                {
+                    const std::string temp = data[t];
+                    for (int i = 1; i < temp.size(); i++)
+                    {
+                        flags["-" + temp[i]] = "";
+                    }
+                    is_flag = true;
+                    continue;
+                }
                 is_flag = true;
             }
             if (is_flag)
@@ -265,6 +280,7 @@ public:
                 new_flags[key] = value;
             }
         }
+        last = new_flags;
         return new_flags;
     }
 };
