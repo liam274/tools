@@ -78,6 +78,17 @@ private:
     std::string description;
     bool _strict;
     std::vector<std::string> org;
+    const bool collide_ok(const std::unordered_map<std::string, std::string> &flags, const std::vector<std::string> &detail) const
+    {
+        for (const std::string &item : detail)
+        {
+            if (flags.find(item) != flags.end())
+            {
+                return true;
+            }
+        }
+        return false;
+    }
 
 public:
     argv_verify(const std::string &file_name, bool strict = true, const std::string &doc = "is a CPP application")
@@ -192,7 +203,7 @@ public:
         std::vector<std::string> aliaed = {};
         for (const auto &[key, value] : rules)
         {
-            if (std::find(aliaed.begin(), aliaed.end(), key) != aliaed.end())
+            if (std::find(aliaed.begin(), aliaed.end(), key) != aliaed.end() || collide_ok(flags, value.collide))
             {
                 continue;
             }
