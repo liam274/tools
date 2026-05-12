@@ -46,7 +46,7 @@ inline std::string join(const type &strings, const std::string &joiner)
     }
     std::string result;
     result.reserve(total_len + joiner.size() * (strings.size() - 1));
-    int i = 0;
+    std::size_t i = 0;
     for (const auto &s : strings)
     {
         result.append(s);
@@ -79,7 +79,7 @@ private:
     bool _strict;
     std::vector<std::string> org;
     std::unordered_map<std::string, std::string> last;
-    const bool collide_ok(const std::unordered_map<std::string, std::string> &flags, const std::vector<std::string> &detail) const
+    bool collide_ok(const std::unordered_map<std::string, std::string> &flags, const std::vector<std::string> &detail) const
     {
         for (const std::string &item : detail)
         {
@@ -115,7 +115,7 @@ public:
     {
         std::cout << name << " " << description << std::endl;
     }
-    const bool has(const std::string &name) const
+    bool has(const std::string &name) const
     {
         return last.find(name) != last.end();
     }
@@ -137,7 +137,7 @@ public:
                 if (data[t][1] != '-' && data[t][2])
                 {
                     const std::string temp = data[t];
-                    for (int i = 1; i < temp.size(); i++)
+                    for (std::size_t i = 1; i < temp.size(); i++)
                     {
                         flags["-" + temp[i]] = "";
                     }
@@ -183,7 +183,7 @@ public:
         if (flags.find("-h") != flags.end() || flags.find("--help") != flags.end())
         {
             descriptionPrinter();
-            int maxl = 0;
+            std::size_t maxl = 0;
             for (const auto &[key, value] : rules)
             {
                 if (std::find(temp.begin(), temp.end(), key) != temp.end())
