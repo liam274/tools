@@ -67,6 +67,7 @@ namespace argument
         std::string default_value;
         std::string alias;
         std::vector<std::string> collide;
+        bool required;
     };
 };
 
@@ -99,7 +100,8 @@ public:
         _strict = strict;
     }
     void append(const std::string &flag_name, const std::string &alias, const std::string &help,
-                const std::string &_default = "", const std::vector<std::string> &collide = {})
+                bool required = true, const std::string &_default = "",
+                const std::vector<std::string> &collide = {})
     {
         org.push_back(flag_name);
         argument::details details;
@@ -107,6 +109,7 @@ public:
         details.default_value = _default;
         details.alias = alias;
         details.collide = collide;
+        details.required = required;
         rules[flag_name] = details;
         details.alias = flag_name;
         rules[alias] = details;
@@ -229,6 +232,10 @@ public:
                     flags[key] = value.default_value;
                     aliaed.push_back(key);
                     aliaed.push_back(value.alias);
+                }
+                else if (!value.required)
+                {
+                    continue;
                 }
                 else
                 {
