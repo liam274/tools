@@ -227,15 +227,11 @@ public:
             }
             if (flags.find(key) == flags.end() && flags.find(value.alias) == flags.end())
             {
-                if (value.default_value.size())
+                if (value.default_value.size() || !value.required)
                 {
                     flags[key] = value.default_value;
                     aliaed.push_back(key);
                     aliaed.push_back(value.alias);
-                }
-                else if (!value.required)
-                {
-                    continue;
                 }
                 else
                 {
